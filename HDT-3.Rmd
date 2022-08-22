@@ -1,0 +1,99 @@
+---
+title: "HDT3"
+output: html_document
+date: '2022-08-22'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("forecast")
+##install.packages("fUnitRoots")
+#install.packages("ggfortify")
+
+library(forecast)
+library(tseries)
+library(fUnitRoots)
+library(ggfortify)
+library(readxl)
+getwd()
+df_consumo <- read_excel("./lstmdata/CONSUMO.xlsx", range="B7:G276")
+```
+```{r}
+df_consumo
+```
+
+```{r}
+df_importacion
+```
+```{r}
+df_consumo$Diesel <- df_consumo$`Diesel alto azufre`+df_consumo$`Diesel bajo azufre`
+df_consumo$`Diesel alto azufre` <- NULL
+df_consumo$`Diesel bajo azufre` <- NULL
+df_consumo[4] <- NULL
+head(df_consumo)
+
+
+summary(df_consumo)
+
+```
+
+```{r}
+
+
+Consumo_super <- ts(df_consumo$`Gasolina superior`, start=c(2000, 1), frequency = 12)
+
+
+plot(Consumo_super)
+
+
+```
+```{r}
+dec_cons_super <- decompose(Consumo_super)
+plot(dec_cons_super)
+```
+
+
+```{r}
+dec_cons_Diesel <- decompose(Consumo_Diesel)
+plot(dec_cons_Diesel)
+```
+
+
+
+```{r}
+dec_imp_super <- decompose(importacion_super)
+plot(dec_imp_super)
+```
+
+```{r}
+plot(Consumo_super)
+trans_cons_super<-diff(BoxCox(Consumo_super, 15))
+plot(trans_cons_super)
+acf(trans_cons_super)
+adfTest(trans_cons_super)
+```
+
+
+```{r}
+
+
+adfTest(Consumo_super)
+adfTest(diff(Consumo_super))
+
+
+
+## super
+auto.arima(Consumo_super)
+
+fit_consumo_super <- arima(log(Consumo_super), c(1, 1, 1),seasonal = list(order = c(2, 0, 0), period = 12))
+forecastAP_Consumo_Super <- forecast(fit_consumo_super, level = c(95), h = 3*12)
+autoplot(forecastAP_Consumo_Super)
+
+
+
+```
+
+
