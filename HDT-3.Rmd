@@ -18,6 +18,9 @@ library(tseries)
 library(fUnitRoots)
 library(ggfortify)
 library(readxl)
+
+library(keras)
+library(tensorflow)
 getwd()
 df_consumo <- read_excel("./lstmdata/CONSUMO.xlsx", range="B7:G276")
 ```
@@ -94,6 +97,69 @@ autoplot(forecastAP_Consumo_Super)
 
 
 
+
 ```
+
+
+```{r}
+
+#SERIE consumo super CON LSTM
+
+serie_norm <- scale(Consumo_super)
+lagged<-c(rep(NA,1),serie_norm[1:(length(serie_norm)-1)])
+supervisada <- as.data.frame(cbind(lagged,serie_norm))
+colnames(supervisada)<-c("x-1","x")
+supervisada[is.na(supervisada)]<-0
+
+#length(Consumo_super)
+
+cantidad_entrenamiento <- round(0.6*length(Consumo_super))
+cantidad_validacion <- round(0.2*length(Consumo_super))
+cantidad_entrenamiento
+cantidad_validacion
+
+#partimos en test, validacion y train. train las primeras 161 filas; validation las siguiente 54 filas y test las ultimas 54 filas.
+test <-  tail(supervisada,cantidad_validacion)
+
+
+supervisada<-supervisada %>% head(nrow(.)-cantidad_validacion)
+validation<-supervisada %>% tail(cantidad_validacion)
+supervisada<-head(supervisada,nrow(supervisada)-cantidad_validacion)
+train<-supervisada
+
+y_train <- train[,2]
+x_train <- train[,1]
+y_val <- validation[,2]
+x_val <- validation[,1]
+y_test <- test[,2]
+x_test <- test[,1]
+x_train
+
+
+
+```
+
+```{r}
+paso <- 1
+caracteristicas <-1
+lote <-1
+unidades <-  1
+
+dim(x_train) <- c(length(x_train),paso,caracteristicas)
+dim(y_train) <- c(length(y_train),caracteristicas)
+dim(x_test) <- c(length(x_test),paso,caracteristicas)
+dim(y_test) <- c(length(y_test),caracteristicas)
+dim(x_val) <- c(length(x_val),paso,caracteristicas)
+dim(y_val) <- c(length(y_val),caracteristicas)
+
+plot(train)
+
+modelo1 <-keras_model_sequential()
+modelo1 %>% 
+  layer_lstm(unidades, batch_input_shape=c(lote,paso,caracteristicas),
+             stateful = T) %>%
+  layer_dense(units = 1)
+```
+
 
 
